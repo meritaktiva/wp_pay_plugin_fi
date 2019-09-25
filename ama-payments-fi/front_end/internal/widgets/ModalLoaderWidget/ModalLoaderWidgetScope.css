@@ -1,0 +1,33 @@
+﻿.modal-loader-widget-scope.dark-layer-div {
+    position: absolute;
+    background: url(dark-transparent-background.png);
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    min-height: 100%;
+    z-index: 200;
+}
+
+.modal-loader-widget-scope .loader-div {
+    width: 300px;
+    background: #fff;
+    top: 30%;
+    position: fixed;
+    right: 50%;
+    margin-right: -150px;
+}
+
+.modal-loader-widget-scope .msg-div {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+    font-weight: bold;
+}
+
+.modal-loader-widget-scope .spinner-div {
+    min-height: 80px;
+    background-image: url(blue-spinner-32.gif);
+    background-repeat: no-repeat;
+    background-position: 50% 0%;
+    background-color: transparent;
+}

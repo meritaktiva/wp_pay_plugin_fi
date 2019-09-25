@@ -1,0 +1,709 @@
+<?php
+
+/**
+ * Polish bank payment class www.przelewy24.pl
+ *
+ * @package merituk
+ * @author Art Media Agency LLC
+ * @copyright 2014
+ * @version $Id$
+ * @access public
+ */
+class polishBank
+{
+
+	/**
+	 * Wsdl address
+	 *
+	 * @var $wsdl_address
+	 **/
+	protected $wsdl_address = 'https://secure.przelewy24.pl/external/wsdl/service.php?wsdl';
+
+
+	/**
+	 * url we send requests to
+	 *
+	 * @var $url
+	 */
+	protected $url = 'https://secure.przelewy24.pl/index.php';
+
+	/**
+	 * url we send requests to
+	 *
+	 * @var $sandbox_url
+	 */
+	protected $sandbox_url = 'https://sandbox.przelewy24.pl';
+
+	/**
+	 * submit button text
+	 *
+	 * @var $submit_btn_text
+	 */
+	protected $submit_button_text = 'Go to payment';
+
+	/**
+	 * unique order identifier must be different for every request
+	 *
+	 * @var $p24_session_id
+	 */
+	protected $p24_session_id;
+
+	/**
+	 * seller ID
+	 *
+	 * @var $p24_id_sprzedawcy
+	 */
+	protected $p24_id_sprzedawcy;
+
+	/**
+	 * order ID
+	 *
+	 * @var $p24_order_id
+	 */
+	protected $p24_order_id;
+
+	/**
+	 * amount in Polish Grosz (PLN/100)
+	 *
+	 * @var $p24_kwota
+	 */
+	protected $p24_kwota;
+
+	/**
+	 * client first name and surname
+	 *
+	 * @var $p24_klient
+	 */
+	protected $p24_klient;
+
+
+	/**
+	 * client street and home/apt. number
+	 *
+	 * @var $p24_adres;
+	 */
+	protected $p24_adres;
+
+	/**
+	 * client zip code
+	 *
+	 * @var $p24_kod
+	 */
+	protected $p24_kod;
+
+	/**
+	 * client city
+	 *
+	 * @var $p24_miasto
+	 */
+	protected $p24_miasto;
+
+	/**
+	 * client country code (D, PL, GB, A,...)
+	 *
+	 * @var $p24_kraj
+	 */
+	protected $p24_kraj = 'PL';
+
+	/**
+	 * client email
+	 *
+	 * @var $p24_email
+	 */
+	protected $p24_email;
+
+	/**
+	 * return URL address for correct transaction result (max.250 chars)
+	 *
+	 * @var $p24_return_url_ok
+	 */
+	protected $p24_return_url_ok;
+
+	/**
+	 * return URL address for incorrect transaction result (max. 250 chars)
+	 *
+	 * @var $p24_return_url_error
+	 */
+	protected $p24_return_url_error;
+
+	/**
+	 * extra description
+	 *
+	 * #var $p24_opis
+	 */
+	protected $p24_opis = ''; #TEST_ERR04
+
+	/**
+	 * language version PL/EN/DE/ES/IT
+	 *
+	 * @var $p24_language
+	 */
+	protected $p24_language = 'PL';
+
+	/**
+	 * input data hash (used to check if data are correct – see p. 2.1).
+	 * Field used to calculate hash: p24_session_id, p24_id_sprzedawcy, p24_amount and CRC key
+	 *
+	 * @var $p24_crc
+	 */
+	protected $p24_crc;
+
+	/**
+	 * crc key for calculating p24_crc
+	 *
+	 * @var $p24_src_key
+	 */
+	protected $p24_crc_key;
+
+	/**
+	 * form fields we use for request
+	 *
+	 * @var $formFields
+	 */
+	protected $formFields = array(
+		'p24_session_id',
+		'p24_id_sprzedawcy',
+		'p24_order_id',
+		'p24_kwota',
+		'p24_klient',
+		'p24_adres',
+		'p24_kod',
+		'p24_miasto',
+		'p24_kraj',
+		'p24_email',
+		'p24_return_url_ok',
+		'p24_return_url_error',
+		'p24_opis',
+		'p24_language',
+		'p24_crc',
+	);
+
+
+	public function __construct($is_sandbox = false)
+	{
+		if ( $is_sandbox ) $this->url = $this->sandbox_url;
+	}
+
+	/**
+	 * Set p24_session_id
+	 *
+	 * @param string $p24_session_id
+	 * @access public
+	 * @return polishBank
+	 */
+	public function setP24SessionId($p24_session_id)
+	{
+		$this->p24_session_id = $p24_session_id;
+
+		return $this;
+	}
+
+	/**
+	 * Get p24_session_id
+	 *
+	 * @access public
+	 * @return string
+	 */
+	public function getP24SessionId()
+	{
+		return $this->p24_session_id;
+	}
+
+	/**
+	 * Set p24_order_id
+	 *
+	 * @param string $p24_order_id
+	 * @access public
+	 * @return polishBank
+	 */
+	public function setP24OrderId($p24_order_id)
+	{
+		$this->p24_order_id = $p24_order_id;
+
+		return $this;
+	}
+
+	/**
+	 * Get p24_order_id
+	 *
+	 * @access public
+	 * @return string
+	 */
+	public function getP24OrderId()
+	{
+		return $this->p24_order_id;
+	}
+
+	/**
+	 * Set p24_id_sprzedawcy
+	 *
+	 * @param string $p24_id_sprzedawcy
+	 * @access public
+	 * @return polishBank
+	 */
+	public function setP24IdSprzedawcy($p24_id_sprzedawcy)
+	{
+		$this->p24_id_sprzedawcy = $p24_id_sprzedawcy;
+
+		return $this;
+	}
+
+	/**
+	 * Get p24_id_sprzedawcy
+	 *
+	 * @access public
+	 * @return string
+	 */
+	public function getP24IdSprzedawcy()
+	{
+		return $this->p24_id_sprzedawcy;
+	}
+
+	/**
+	 * Set p24_kwota
+	 *
+	 * @param string $p24_kwota
+	 * @access public
+	 * @return polishBank
+	 */
+	public function setP24Kwota($p24_kwota)
+	{
+		$this->p24_kwota = number_format($p24_kwota, 2, '.', '')*100;
+
+		return $this;
+	}
+
+	/**
+	 * Get p24_kwota
+	 *
+	 * @access public
+	 * @return string
+	 */
+	public function getP24Kwota()
+	{
+		return $this->p24_kwota;
+	}
+
+
+	/**
+	 * Set p24_klient
+	 *
+	 * @param string $p24_klient
+	 * @access public
+	 * @return polishBank
+	 */
+	public function setP24Klient($p24_klient)
+	{
+		$this->p24_klient = $p24_klient;
+
+		return $this;
+	}
+
+	/**
+	 * Get p24_klient
+	 *
+	 * @access public
+	 * @return string
+	 */
+	public function getP24Klient()
+	{
+		return $this->p24_klient;
+	}
+
+	/**
+	 * Set p24_adres
+	 *
+	 * @param string $p24_adres
+	 * @access public
+	 * @return polishBank
+	 */
+	public function setP24Adres($p24_adres)
+	{
+		$this->p24_adres = $p24_adres;
+
+		return $this;
+	}
+
+	/**
+	 * Get p24_adres
+	 *
+	 * @access public
+	 * @return string
+	 */
+	public function getP24Adres()
+	{
+		return $this->p24_adres;
+	}
+
+	/**
+	 * Set p24_kod
+	 *
+	 * @param string $p24_kod
+	 * @access public
+	 * @return polishBank
+	 */
+	public function setP24Kod($p24_kod)
+	{
+		$this->p24_kod = $p24_kod;
+
+		return $this;
+	}
+
+	/**
+	 * Get p24_kod
+	 *
+	 * @access public
+	 * @return string
+	 */
+	public function getP24Kod()
+	{
+		return $this->p24_kod;
+	}
+
+	/**
+	 * Set p24_miasto
+	 *
+	 * @param string $p24_miasto
+	 * @access public
+	 * @return polishBank
+	 */
+	public function setP24Miasto($p24_miasto)
+	{
+		$this->p24_miasto = $p24_miasto;
+
+		return $this;
+	}
+
+	/**
+	 * Get p24_miasto
+	 *
+	 * @access public
+	 * @return string
+	 */
+	public function getP24Miasto()
+	{
+		return $this->p24_miasto;
+	}
+
+	/**
+	 * Set p24_kraj
+	 *
+	 * @param string $p24_kraj
+	 * @access public
+	 * @return polishBank
+	 */
+	public function setP24Kraj($p24_kraj)
+	{
+		$this->p24_kraj = $p24_kraj;
+
+		return $this;
+	}
+
+	/**
+	 * Get p24_kraj
+	 *
+	 * @access public
+	 * @return string
+	 */
+	public function getP24IdKraj()
+	{
+		return $this->p24_kraj;
+	}
+
+	/**
+	 * Set p24_email
+	 *
+	 * @param string $p24_email
+	 * @access public
+	 * @return polishBank
+	 */
+	public function setP24Email($p24_email)
+	{
+		$this->p24_email = $p24_email;
+
+		return $this;
+	}
+
+	/**
+	 * Get p24_email
+	 *
+	 * @access public
+	 * @return string
+	 */
+	public function getP24Email()
+	{
+		return $this->p24_email;
+	}
+	/**
+	 * Set p24_return_url_ok
+	 *
+	 * @param string $p24_return_url_ok
+	 * @access public
+	 * @return polishBank
+	 */
+	public function setP24ReutrnUrlOk($p24_return_url_ok)
+	{
+		$this->p24_return_url_ok = $p24_return_url_ok;
+
+		return $this;
+	}
+
+	/**
+	 * Get p24_return_url_ok
+	 *
+	 * @access public
+	 * @return string
+	 */
+	public function getP24ReturnUrlOk()
+	{
+		return $this->p24_return_url_ok;
+	}
+
+	/**
+	 * Set p24_return_url_error
+	 *
+	 * @param string $p24_return_url_error
+	 * @access public
+	 * @return polishBank
+	 */
+	public function setP24ReturnUrlError($p24_return_url_error)
+	{
+		$this->p24_return_url_error = $p24_return_url_error;
+
+		return $this;
+	}
+
+	/**
+	 * Get p24_return_url_error
+	 *
+	 * @access public
+	 * @return string
+	 */
+	public function getP24ReturnUrlError()
+	{
+		return $this->p24_return_url_error;
+	}
+
+	/**
+	 * Set p24_opis
+	 *
+	 * @param string $p24_opis
+	 * @access public
+	 * @return polishBank
+	 */
+	public function setP24Opis($p24_opis)
+	{
+		$this->p24_opis = $p24_opis;
+
+		return $this;
+	}
+
+	/**
+	 * Get p24_opis
+	 *
+	 * @access public
+	 * @return string
+	 */
+	public function getP24Opis()
+	{
+		return $this->p24_opis;
+	}
+
+	/**
+	 * Set p24_language
+	 *
+	 * @param string $p24_language
+	 * @access public
+	 * @return polishBank
+	 */
+	public function setP24Language($p24_language)
+	{
+		$this->p24_language = $p24_language;
+
+		return $this;
+	}
+
+	/**
+	 * Get p24_language
+	 *
+	 * @access public
+	 * @return string
+	 */
+	public function getP24Language()
+	{
+		return $this->p24_language;
+	}
+
+
+	/**
+	 * Set p24_crc
+	 *
+	 * @param string $p24_crc
+	 * @access public
+	 * @return polishBank
+	 */
+	public function setP24Crc($p24_crc)
+	{
+		$this->p24_crc = $p24_crc;
+
+		return $this;
+	}
+
+	/**
+	 * Get p24_crc
+	 *
+	 * @access public
+	 * @return string
+	 */
+	public function getP24Crc()
+	{
+		$srcCalc = array(
+			$this->p24_session_id,
+			$this->p24_id_sprzedawcy,
+			$this->p24_kwota,
+			$this->p24_crc_key
+		);
+		return md5(implode("|", $srcCalc));
+	}
+
+
+	/**
+	 * Set p24_crc_key
+	 *
+	 * @param string $p24_crc_key
+	 * @access public
+	 * @return polishBank
+	 */
+	public function setP24CrcKey($p24_crc_key)
+	{
+		$this->p24_crc_key = $p24_crc_key;
+
+		return $this;
+	}
+
+	/**
+	 * Get p24_crc_key
+	 *
+	 * @access public
+	 * @return string
+	 */
+	public function getP24CrcKey()
+	{
+		return $this->p24_crc_key;
+	}
+
+	/**
+	 * Set submit button text
+	 *
+	 * @param $sumbit_button_text
+	 * @acces public
+	 * @return polishBank
+	 */
+	public function setSubmitButtonText($submit_button_text)
+	{
+		$this->submit_button_text = $submit_button_text;
+
+		return $this;
+	}
+
+	/**
+	 * Generate form
+	 *
+	 * @access public
+	 * @return string
+	 */
+	public function getForm()
+	{
+		$form = '<form action="' . $this->url . '" method="post"  id="paymentForm">';
+
+		foreach ( $this->formFields as $field ) {
+			if ( $field == "p24_crc" ) $this->{$field} = $this->getP24Crc();
+			$form .= '<input type="hidden" name="'.$field.'" value="'.$this->{$field}.'" />';
+		}
+		$form .= '<input type="submit" name="submit_send" class="btn btn-primary" value="' . $this->submit_button_text . '">';
+		//$form .= '<input type="hidden" name="p24_metoda" value="" id="p24_method">';
+		$form .= '</form>';
+
+
+
+		return $form;
+	}
+
+	/**
+	 * Return reference
+	 *
+	 * @param stamp
+	 * @return int
+	 */
+	public function generateReference($stamp)
+	{
+		$stamp = strval($stamp);
+		$multipliers = Array(7, 3, 1);
+        $result = Array();
+        $sum = 0;
+        $currmult = 0;
+        for ($i = strlen($stamp) - 1; $i >= 0; $i--)
+        {
+            $digit = $stamp{$i};
+            if (! is_numeric($digit))
+            {
+                continue;
+            }
+            $digit = (int) $digit;
+            $sum += $digit * $multipliers[$currmult];
+            $currmult = ($currmult == 2) ? 0 : $currmult + 1;
+        }
+        // Get the difference to the next highest ten
+        $nextten = (((int) ($sum / 10)) + 1) * 10;
+        $checkdigit = $nextten - $sum;
+        if ($checkdigit == 10)
+        {
+            $checkdigit = 0;
+        }
+        return $stamp.$checkdigit;
+	}
+
+	/**
+	 * Generate random session id using order id
+	 *
+	 * @param $orderId
+	 * @access public
+	 * @return string
+	 */
+	public function generateRandSessionId($orderId)
+	{
+		$time = mktime();
+		return substr($time, (strlen($time)-4),4) . $orderId;
+	}
+
+	/**
+	 * Get id from session Id
+	 *
+	 * @access public
+	 * @return string
+	 */
+	public function getIdFromSessionId()
+	{
+		$id = substr($this->p24_session_id, 4, strlen($this->p24_session_id));
+		return $id;
+	}
+
+	/**
+	 * Get payment methods
+	 */
+	public function getPaymentMethods()
+	{
+		$soap = new SoapClient($this->wsdl_address);
+		$res = $soap->PaymentMethods(WSDL_USER, WSDL_PASSWORD, WSDL_LANG);
+		if ($res->error->errorCode) {
+			error_log($res->error->errorMessage);
+		}
+
+		return $res->result;
+	}
+
+}
+
+
+
+?>
